@@ -1,0 +1,11 @@
+time arduinobotup -u test1 --verify tests/blinky.ino &
+time arduinobotup -u test2 --verify tests/blinky.ino &
+time arduinobotup -u test3 --verify tests/blinky.ino &
+time arduinobotup -u test4 --verify tests/blinky.ino &
+time arduinobotup -u test5 --verify tests/blinky.ino &
+time arduinobotup -u test6 --verify tests/blinky.ino &
+time arduinobotup -u test7 --verify tests/blinky.ino &
+time arduinobotup -u test8 --verify tests/blinky.ino &
+time arduinobotup -u test9 --verify tests/blinky.ino &
+time arduinobotup -u test10 --verify tests/blinky.ino &
+time arduinobotup -u test11 --verify tests/blinky.ino &

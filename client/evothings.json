@@ -1,0 +1,14 @@
+{
+  "uuid": "33004cb4-17f5-460c-abe9-7908cac9b829",
+  "plugins": [],
+  "libraries": [],
+  "name": "client",
+  "title": "Arduinobot Demo Client",
+  "description": "App oneline description.",
+  "long-description": "App long description.",
+  "version": "",
+  "author-name": "Evo Things",
+  "author-email": "build@evothings.com",
+  "author-url": "https://evothings.com",
+  "cordova-id": "com.evothings.samples.client"
+}

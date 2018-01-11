@@ -1,0 +1,11 @@
+builds
+bin
+junk
+nimcache
+arduinobot
+arduinobot.conf
+arduinobotup
+tests/all
+*.zip
+*.img
+NOTES.md
