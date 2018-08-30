@@ -81,6 +81,18 @@ Then update apt and install mosquitto - select "n" when it first explains the pr
     sudo apt-get update
     sudo aptitude install mosquitto
 
+Edit the configuration `/etc/mosquitto/mosquitto.conf` and add websockets support on port 1884 by makin sure it ends like this:
+
+    include_dir /etc/mosquitto/conf.d
+
+    listener 1883
+    listener 1884
+    protocol websockets
+
+Restart service:
+
+    sudo service mosquitto restart
+
 Then run this to see that mosquitto is listening on port 1883:
 
     netstat -plnt | grep 1883
@@ -194,6 +206,60 @@ Then enable it:
     systemctl daemon-reload
     systemctl enable arduinobot
     systemctl start arduinobot
+
+### Following log
+Systemd uses `journalctl` command to access logs, this command will follow the log for arduinobot:
+
+```
+sudo journaltctl -f -u arduinobot
+```
+
+### Enabling reporting via POST
+We have also added an optional side channel so that Arduinobot can POST the job information and accompanying errors to an external system. This is enabled by using the option `-r http://someserver.com/wherever`. If you run Arduinobot as a systemd service, just add the option to the ExecStart line like this:
+```
+ExecStart=/home/pi/.nimble/bin/arduinobot -a /home/pi/arduino-1.8.4/arduino -r http://myserver/api
+``` 
+
+Whenever Arduinobot performs a verify or upload job, it will also perform a POST to that URL. Note that at this point Arduinobot does not support HTTPS for this.
+
+This example shows the structure of the JSON posted, here we have an error:
+```
+{
+	"sessionId": "f6cdec83-4e42-4695-896b-ea486f2d8670",
+	"data": {
+		"job": {
+			"sketch": "blinky.ino",
+			"src": "LyoKICogQXV0aG9yOiBH9nJhbiBLcmFtcGUKICovCgp2b2lkIHNldHVwKCkgewogIHBpbk1vZGUoMTMsIE9VVFBVVCk7Cn0KCnZvaWQgbG9vcCgpIHsKICBsZWRfb24oKTsKICBkZWxheSgxMDAwKTsKICBsZWRfb2ZmKCk7CiAgZGVsIGF5KDEwMDApOwp9Cgp2b2lkIGxlZF9vbigpCnsKICBkaWdpdGFsV3JpdGUoMTMsIDEpOwp9Cgp2b2lkIGxlZF9vZmYoKQp7CiAgZGlnaXRhbFdyaXRlKDEzLCAwKTsKfQogICAgICAgIA==",
+			"board": "arduino:avr:uno",
+			"port": "/dev/ttyACM0"
+		},
+		"result": {
+			"type": "success",
+			"command": "upload",
+			"stdout": "/home/pi/arduino-1.8.4/arduino-builder -dump-prefs -logger=machine -hardware /home/pi/arduino-1.8.4/hardware -tools /home/pi/arduino-1.8.4/tools-builder -tools /home/pi/arduino-1.8.4/hardware/tools/avr -built-in-libraries /home/pi/arduino-1.8.4/libraries -libraries /home/pi/Arduino/libraries -fqbn=arduino:avr:uno -vid-pid=0X2341_0X0043 -ide-version=10804 -build-path /home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670 -warnings=null -prefs=build.path=/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670 -prefs=build.warn_data_percentage=75 -prefs=runtime.tools.avr-gcc.path=/home/pi/arduino-1.8.4/hardware/tools/avr -prefs=runtime.tools.avrdude.path=/home/pi/arduino-1.8.4/hardware/tools/avr -prefs=runtime.tools.arduinoOTA.path=/home/pi/arduino-1.8.4/hardware/tools/avr -verbose /home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/blinky.ino/blinky.ino\n/home/pi/arduino-1.8.4/arduino-builder -compile -logger=machine -hardware /home/pi/arduino-1.8.4/hardware -tools /home/pi/arduino-1.8.4/tools-builder -tools /home/pi/arduino-1.8.4/hardware/tools/avr -built-in-libraries /home/pi/arduino-1.8.4/libraries -libraries /home/pi/Arduino/libraries -fqbn=arduino:avr:uno -vid-pid=0X2341_0X0043 -ide-version=10804 -build-path /home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670 -warnings=null -prefs=build.path=/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670 -prefs=build.warn_data_percentage=75 -prefs=runtime.tools.avr-gcc.path=/home/pi/arduino-1.8.4/hardware/tools/avr -prefs=runtime.tools.avrdude.path=/home/pi/arduino-1.8.4/hardware/tools/avr -prefs=runtime.tools.arduinoOTA.path=/home/pi/arduino-1.8.4/hardware/tools/avr -verbose /home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/blinky.ino/blinky.ino\nUsing board 'uno' from platform in folder: /home/pi/arduino-1.8.4/hardware/arduino/avr\nUsing core 'arduino' from platform in folder: /home/pi/arduino-1.8.4/hardware/arduino/avr\nDetecting libraries used...\n\"/home/pi/arduino-1.8.4/hardware/tools/avr/bin/avr-g++\" -c -g -Os -w -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics  -flto -w -x c++ -E -CC -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=10804 -DARDUINO_AVR_UNO -DARDUINO_ARCH_AVR   \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/cores/arduino\" \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/variants/standard\" \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/sketch/blinky.ino.cpp\" -o \"/dev/null\"\nGenerating function prototypes...\n\"/home/pi/arduino-1.8.4/hardware/tools/avr/bin/avr-g++\" -c -g -Os -w -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics  -flto -w -x c++ -E -CC -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=10804 -DARDUINO_AVR_UNO -DARDUINO_ARCH_AVR   \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/cores/arduino\" \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/variants/standard\" \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/sketch/blinky.ino.cpp\" -o \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/preproc/ctags_target_for_gcc_minus_e.cpp\"\n\"/home/pi/arduino-1.8.4/tools-builder/ctags/5.8-arduino11/ctags\" -u --language-force=c++ -f - --c++-kinds=svpf --fields=KSTtzns --line-directives \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/preproc/ctags_target_for_gcc_minus_e.cpp\"\nCompiling sketch...\n\"/home/pi/arduino-1.8.4/hardware/tools/avr/bin/avr-g++\" -c -g -Os  -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics -MMD -flto -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=10804 -DARDUINO_AVR_UNO -DARDUINO_ARCH_AVR   \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/cores/arduino\" \"-I/home/pi/arduino-1.8.4/hardware/arduino/avr/variants/standard\" \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/sketch/blinky.ino.cpp\" -o \"/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/sketch/blinky.ino.cpp.o\"\n",
+			"stderr": "Picked up JAVA_TOOL_OPTIONS: \nLoading configuration...\nInitialising packages...\nPreparing boards...\nVerifying...\n/home/pi/ecraft2learn/arduinobot/builds/f6cdec83-4e42-4695-896b-ea486f2d8670/blinky.ino/blinky.ino: In function 'void loop()':\nblinky:13: error: 'del' was not declared in this scope\n   del ay(1000);\n   ^\nexit status 1\n",
+			"errors": [{
+				"line": "13",
+				"message": " error: 'del' was not declared in this scope"
+			}],
+			"exitCode": 1
+		}
+	}
+}
+```
+Things to note above:
+* Source is sent base64 encoded.
+* The `type` member of `result` shows success if Arduinobot did its job correctly, it does not signify compilation success.
+* Command can be `upload` or `verify`, both compile but only `upload` will flash.
+* The raw stdout/stderr is included, but more interesting is the `errors` member with an array of errors and their corresponding position in the source.
+
+### Adding demo client
+Arduinobot serves HTTP on port 8080 and offers a REST API there for launching and checking results of jobs. But it can also serve the demo HTML5 web client. Arduinobot serves any existing directory called `public` from its working directory. If you followed instructions above that would be in `/home/pi`. Let's create a soft link into the git clone:
+
+    cd ~
+    ln -s ecraft2learn/arduinobot/client public
+
+Then you can try pointing your browser to http://raspberrypi.local:8080/index.html
 
 ## How to run
 Arduinobot is a server and only needs an MQTT server to connect to in order to function. Use `--help` to see information on available options:
