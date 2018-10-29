@@ -1,4 +1,4 @@
-# Arduinobot
+# Craftbot for Arduino
 
 For making Arduino compilation and flashing into a service it turns out there have been numerous takes on this task over the years but today there are basically two reasonable paths we can take:
 
@@ -14,14 +14,14 @@ One can also mention the arduino-create-agent tool that Arduino also has created
 > "we are using golang and cross compile on all available platforms (ARM, MacOS, Linux, Win) both 32 and 64 bits to create an agent. The agent can listen locally or remotely to allow you program your boards on the internet."
 
 ## Implementation
-The Arduinobot is a small binary service that is run as a service on a Raspberry Pi, or other machine since it's cross platform. Arduinobot connects to an MQTT server and further configuration is picked up as a retained message on the topic `config`. Arduinobot then listens to the MQTT topics `verify` and `upload` in order to perform **compilation** and **flashing** jobs. Messages are in JSON format. It also listens for REST calls on a given port to perform the same kind of operations.
+The Craftbot for Arduino is a small binary service that is run as a service on a Raspberry Pi, or other machine since it's cross platform. Craftbot for Arduino connects to an MQTT server and further configuration is picked up as a retained message on the topic `config`. Craftbot for Arduino then listens to the MQTT topics `verify` and `upload` in order to perform **compilation** and **flashing** jobs. Messages are in JSON format. It also listens for REST calls on a given port to perform the same kind of operations.
 
 The actual work is performed by invoking either `arduino` or `arduino-builder`.
 
 # Raspbian Stretch
-Arduinobot is developed primarily for Raspbian. The latest stable is called **Stretch**, on Linux, [follow the instructions to put it on an sdcard](https://www.raspberrypi.org/documentation/installation/installing-images/linux.md).
+Craftbot for Arduino is developed primarily for Raspbian. The latest stable is called **Stretch**, on Linux, [follow the instructions to put it on an sdcard](https://www.raspberrypi.org/documentation/installation/installing-images/linux.md).
 
-In the end we will make **an automated script to build a complete sdcard** with Arduinobot, but for now this document describes the various steps to prepping it.
+In the end we will make **an automated script to build a complete sdcard** with Craftbot for Arduino, but for now this document describes the various steps to prepping it.
 
 ## Boot Rpi
 Put a file called "ssh" onto the "boot" partition of the sdcard.
@@ -98,7 +98,7 @@ Then run this to see that mosquitto is listening on port 1883:
     netstat -plnt | grep 1883
 
 # Arduino IDE
-Arduinobot calls out to the binaries included in the Arduino IDE installation to perform it's work. Installing Arduino is easily done by simply downloading and unpacking:
+Craftbot for Arduino calls out to the binaries included in the Arduino IDE installation to perform it's work. Installing Arduino is easily done by simply downloading and unpacking:
 
     cd
     wget https://www.arduino.cc/download.php?f=/arduino-1.8.4-linuxarm.tar.xz
@@ -125,7 +125,7 @@ Otherwise, just use `http` instead:
 
 
 ## Installing Nim
-Arduinobot is written in Nim, a modern high performance language that produces small and fast binaries by compiling via C. We first need to install Nim.
+Craftbot for Arduino is written in Nim, a modern high performance language that produces small and fast binaries by compiling via C. We first need to install Nim.
 
 ### Linux
 For **regular Linux** (not Raspbian, see below!) you can install Nim the easiest using [choosenim](https://github.com/dom96/choosenim):
@@ -150,7 +150,7 @@ Finally we add this to ~/.profile
 
 Then we have the `nim` compiler and the `nimble` package manager available.
 
-## Building Arduinobot
+## Building Craftbot for Arduino
 ### Prerequisites
 First we need to compile the [Paho C library](https://www.eclipse.org/paho/clients/c/) for communicating with MQTT. It's not available as far as I could tell via packages. This library is the de facto standard for MQTT communication and used in tons of projects.
 
@@ -167,7 +167,7 @@ Then we can build and install Paho C:
     sudo ldconfig
 
 ### Building
-Now we are ready to build **arduinobot**. Enter the `arduinobot` directory and build it using the command `nimble build` or both build and install it using `nimble install`. This will download and install Nim dependencies automatically:
+Now we are ready to build **Craftbot for Arduino**. Enter the `arduinobot` directory and build it using the command `nimble build` or both build and install it using `nimble install`. This will download and install Nim dependencies automatically:
 
     cd ~/ecraft2learn/arduinobot
     nimble install
@@ -188,7 +188,7 @@ You can also run some tests, but they require a running MQTT server on localhost
 Create `/etc/systemd/system/arduinobot.service`:
 
     [Unit]
-    Description=Arduinobot
+    Description=Craftbot-for-Arduino
     After=network.target
 
     [Service]
@@ -215,12 +215,12 @@ sudo journaltctl -f -u arduinobot
 ```
 
 ### Enabling reporting via POST
-We have also added an optional side channel so that Arduinobot can POST the job information and accompanying errors to an external system. This is enabled by using the option `-r http://someserver.com/wherever`. If you run Arduinobot as a systemd service, just add the option to the ExecStart line like this:
+We have also added an optional side channel so that Arduinobot can POST the job information and accompanying errors to an external system. This is enabled by using the option `-r http://someserver.com/wherever`. If you run Craftbot for Arduino as a systemd service, just add the option to the ExecStart line like this:
 ```
 ExecStart=/home/pi/.nimble/bin/arduinobot -a /home/pi/arduino-1.8.4/arduino -r http://myserver/api
 ``` 
 
-Whenever Arduinobot performs a verify or upload job, it will also perform a POST to that URL. Note that at this point Arduinobot does not support HTTPS for this.
+Whenever Craftbot for Arduino performs a verify or upload job, it will also perform a POST to that URL. Note that at this point Craftbot for Arduino does not support HTTPS for this.
 
 This example shows the structure of the JSON posted, here we have an error:
 ```
@@ -254,7 +254,7 @@ Things to note above:
 * The raw stdout/stderr is included, but more interesting is the `errors` member with an array of errors and their corresponding position in the source.
 
 ### Adding demo client
-Arduinobot serves HTTP on port 8080 and offers a REST API there for launching and checking results of jobs. But it can also serve the demo HTML5 web client. Arduinobot serves any existing directory called `public` from its working directory. If you followed instructions above that would be in `/home/pi`. Let's create a soft link into the git clone:
+Craftbot for Arduino serves HTTP on port 8080 and offers a REST API there for launching and checking results of jobs. But it can also serve the demo HTML5 web client. Craftbot for Arduino serves any existing directory called `public` from its working directory. If you followed instructions above that would be in `/home/pi`. Let's create a soft link into the git clone:
 
     cd ~
     ln -s ecraft2learn/arduinobot/client public
@@ -262,7 +262,7 @@ Arduinobot serves HTTP on port 8080 and offers a REST API there for launching an
 Then you can try pointing your browser to http://raspberrypi.local:8080/index.html
 
 ## How to run
-Arduinobot is a server and only needs an MQTT server to connect to in order to function. Use `--help` to see information on available options:
+Craftbot for Arduino is a server and only needs an MQTT server to connect to in order to function. Use `--help` to see information on available options:
 
     gokr@yoda:~$ arduinobot --help
     arduinobot
